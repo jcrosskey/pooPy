@@ -90,7 +90,8 @@ def readAlign(alignRecord):
     fields = alignRecord.split("\t") # split by tabs
     qname = fields[0]
     flag = format(int(fields[1]),'016b') # binary format
-    #print flag
+    flag = map(int,flag) # convert flag from string to integers
+
     # interpret bitwise flags
     if flag[-1] == 1:
         is_onlymap = False

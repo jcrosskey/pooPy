@@ -240,9 +240,9 @@ def samStat(samFile, outputFile):
     for key in readSeq_dict:
         d = readSeq_dict[key]
         myout2.write("{}\t{}\t".format(key, d['nMapping']))
-        for map in d['mapInfo']:
+        for thismap in d['mapInfo']:
             # qstart, qend # rstart, rend # secondary # forward/backward @  edit distance, refName
-            myout2.write("({}, {} # {}, {} # {} # {} @ {}, {})".format(map[0],map[1],map[2],map[3],1 if map[4] is True else 0, -1 if map[5] is True else 1,map[6],map[7]))
+            myout2.write("({}, {} # {}, {} # {} # {} @ {}, {})".format(thismap[0],thismap[1],thismap[2],thismap[3],-1 if thismap[4] else 1, -1 if thismap[5] else 1,thismap[6],thismap[7]))
         myout2.write("\n")
 
     myout2.close()

@@ -32,6 +32,7 @@ def get_contig(fastaFile, seqID, start, end):
     seq = ""
     fasta = open(fastaFile,'r') 
     line = fasta.readline()
+    sys.stdout.write('>{}\n'.format(seqID))
     while line != "":
         if line[0] == '>':
             thisID = line.strip().split()[0][1:] # sequence ID until the first space
