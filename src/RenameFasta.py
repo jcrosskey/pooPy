@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+''' Rename sequence names in fasta file so that paired end reads have different names
+    with different suffixes: /1, or /2.
+'''
 import re
 import argparse
 import sys
