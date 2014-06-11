@@ -152,11 +152,18 @@ def readAlign(alignRecord):
     else:
         is_supplementary_alignment = False
     
-    rname = fields[2]
+    rname = fields[2] # reference sequence name
     rstart = int(fields[3]) # starting mapping position on the reference sequence, 1-based
     mapQ = int(fields[4]) # mapping quality
-    cigarstring = fields[5]
-    qSeq = fields[9]
+    cigarstring = fields[5] # CIGAR string
+    qSeq = fields[9] # segment sequence
+
+    # search for NM tag
+    NM_pos = alignRecord.find('NM:i:')
+    if NM_pos != -1: # if NM tag exists
+        NM = int(alignRecord[(NM_pos+5):alignRecord.find('\t',NM_pos+5)])
+    else:
+        NM = None
     
     char = re.findall('\D',cigarstring) # operation characters, MIDNSHP=X
     char = [x.upper() for x in char]  # convert to upper case
@@ -189,4 +196,4 @@ def readAlign(alignRecord):
         qlen = sum([x[0] for x in cigar if x[1] in 'MIX='])
         qend = qstart + qlen - 1
 
-    return {'qname':qname, 'flag':int(fields[1]),'is_onlymap':is_onlymap,'all_seg_proper':all_seg_proper,'is_unmapped':is_unmapped,'is_next_seg_unmapped':is_next_seg_unmapped,'is_reversecomplement':is_reversecomplement,'is_next_seg_reversecomplement':is_next_seg_reversecomplement,'is_first_seg':is_first_seg,'is_last_seg':is_last_seg,'is_secondary_alignment':is_secondary_alignment,'is_pcr':is_pcr,'is_supplementary_alignment':is_supplementary_alignment,'rstart':rstart, 'mapQ':mapQ, 'cigarstring':cigarstring,'cigar':cigar,'positions':positions,'rend':rend,'rname':rname,'qSeq':qSeq,'qstart':qstart,'qend':qend}
+    return {'qname':qname, 'flag':int(fields[1]),'is_onlymap':is_onlymap,'all_seg_proper':all_seg_proper,'is_unmapped':is_unmapped,'is_next_seg_unmapped':is_next_seg_unmapped,'is_reversecomplement':is_reversecomplement,'is_next_seg_reversecomplement':is_next_seg_reversecomplement,'is_first_seg':is_first_seg,'is_last_seg':is_last_seg,'is_secondary_alignment':is_secondary_alignment,'is_pcr':is_pcr,'is_supplementary_alignment':is_supplementary_alignment,'rstart':rstart, 'mapQ':mapQ, 'cigarstring':cigarstring,'cigar':cigar,'positions':positions,'rend':rend,'rname':rname,'qSeq':qSeq,'qstart':qstart,'qend':qend,'NM':NM}
