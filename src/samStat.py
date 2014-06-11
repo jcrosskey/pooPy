@@ -141,10 +141,14 @@ def samStat(samFile, outputFile):
     nReferences = 0 # number of reference sequences
     refLens = [] # list of reference length
     refNames = []# list of reference names
-    count = 0
+    count = 0 # number of aligned records in the sam file
+
+    # dictionaries for the reference sequences and the read sequences
     refSeq_dict = dict()
     readSeq_dict = dict()
+
     sys.stdout.write(">> Scan sam file \n")
+    # start scanning sam file
     with open(samFile,'r') as mysam:
         for line in mysam:
             if line[0] == '@': # header line
@@ -157,7 +161,7 @@ def samStat(samFile, outputFile):
             else: # non-header line
                 line = line.strip()            
                 count += 1
-                read = mapStat.readAlign(line)
+                read = mapStat.readAlign(line) # parse the alignment record
 
                 if read['cigarstring']=='*':
                     continue
@@ -167,10 +171,10 @@ def samStat(samFile, outputFile):
                 #print read['cigarstring']
                 
                 
-                # if this reference sequence is not in the dictionary, add it
+                # if this reference sequence is not in the dictionary, initiate it
                 if not refSeq_dict.has_key(rname):
                     refLen = refLens[refNames.index(rname)] # length of the reference sequence
-                    refSeq_dict[rname] = {'refLen':refLen, 'nReads':0, 'nReadsBp':0, 'nMatchBp':0,'nInsBp':0, 'nDelBp':0, 'nSubBp':0, 'coverage':[0]*refLen}
+                    refSeq_dict[rname] = {'refLen':refLen, 'nReads':0, 'nReadsBp':0, 'nMatchBp':0,'nInsBp':0, 'nDelBp':0, 'nSubBp':0, 'nEdit':0,'coverage':[0]*refLen}
 
                 if not readSeq_dict.has_key(qname):
                     readSeq_dict[qname] = {'nMapping':0, 'mapInfo':list()}
@@ -194,10 +198,20 @@ def samStat(samFile, outputFile):
 
                 refSeq_dict[rname]['nInsBp'] += cigarLens['ins_len'] # update number of insertion bps
                 refSeq_dict[rname]['nDelBp'] += cigarLens['del_len'] # update number of deletion bps
+
+                # update edit distance
+                if read['NM'] is not None:
+                    refSeq_dict[rname]['nEdit'] += 1
+
+                # update the coverage at the mapped positions
                 for apos in read['positions']:
                     refSeq_dict[rname]['coverage'][apos-1] += 1
 
-                readSeq_dict[qname]['mapInfo'].append((read['qstart'],read['qend'], read['rstart'], read['rend'], rname))
+                # store the mapping information for this read:
+                # start and end positions for both the query read and the ref seq
+                # is this a secondary alignment?
+                # is this a reverse complement?
+                readSeq_dict[qname]['mapInfo'].append((read['qstart'],read['qend'], read['rstart'], read['rend'], read['is_secondary_alignment'], read['is_reversecomplement'],read['NM'],rname))
 
                 if count % 10000 == 0:
                     sys.stdout.write('  scanned {} records\n'.format(count))
@@ -208,22 +222,27 @@ def samStat(samFile, outputFile):
 #        refSeq_dict[key]['nCovBp'] = len(refSeq_dict[key]['mappedPos'])
 
     sys.stdout.write(">> Write statistics in output file \n")
+
+    # print out statistics information for the reference sequences
     myout1 = open(outputFile+".ref", 'w')
-    myout1.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format('refName', 'refLen','nReads', 'nReadsBp', 'nMatchBp','nInsBp','nDelBp','nSubBp','nCovBp','maxCov','avgCov'))
+    myout1.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format('refName', 'refLen','nReads', 'nReadsBp', 'nMatchBp','nInsBp','nDelBp','nSubBp','nEdit','nCovBp','maxCov','avgCov','coverage'))
 
     for key in refSeq_dict:
         d = refSeq_dict[key]
-        myout1.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(key, d['refLen'],d['nReads'], d['nReadsBp'], d['nMatchBp'],d['nInsBp'],d['nDelBp'],d['nSubBp'],d['refLen'] - d['coverage'].count(0),max(d['coverage']),float(d['nReadsBp'])/float(d['refLen'])))
+        nCovBp = d['refLen'] - d['coverage'].count(0)
+        myout1.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(key, d['refLen'],d['nReads'], d['nReadsBp'], d['nMatchBp'],d['nInsBp'],d['nDelBp'],d['nSubBp'],d['nEdit'],nCovBp,max(d['coverage']),float(d['nReadsBp'])/float(d['refLen']),float(nCovBp)/float(d['refLen'])))
 
     myout1.close()
 
+    # print out statistics information for the reads
     myout2 = open(outputFile+".read", 'w')
     myout2.write("{}\t{}\t{}\n".format('readName', 'nMappings','Mappings'))
     for key in readSeq_dict:
         d = readSeq_dict[key]
         myout2.write("{}\t{}\t".format(key, d['nMapping']))
         for map in d['mapInfo']:
-            myout2.write("({}, {} # {}, {} @ {})".format(map[0],map[1],map[2],map[3],map[4]))
+            # qstart, qend # rstart, rend # secondary # forward/backward @  edit distance, refName
+            myout2.write("({}, {} # {}, {} # {} # {} @ {}, {})".format(map[0],map[1],map[2],map[3],1 if map[4] is True else 0, -1 if map[5] is True else 1,map[6],map[7]))
         myout2.write("\n")
 
     myout2.close()
