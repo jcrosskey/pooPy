@@ -41,11 +41,13 @@ def get_contig(fastaFile, seqID, start, end):
                 while nextline!='' and nextline[0] != '>' and (len(seq)<=end or end==-1):
                     seq += nextline
                     nextline = fasta.readline().strip("\n")
-                if end == -1 or (start <= end and end <= len(seq)):
+                if start <= end and end <= len(seq):
                     sys.stdout.write('{}\n'.format(seq[(start - 1):end]))
+                elif end == -1:
+                    sys.stdout.write('{}\n'.format(seq[(start - 1):]))
                 else:
                     sys.stderr.write("end position passed end of the sequence!\n")
-                    sys.stdout.write('{}\n'.format(seq[(start - 1):-1]))
+                    sys.stdout.write('{}\n'.format(seq[(start - 1):]))
                     return -1
         line = fasta.readline()
     if seq == "":
