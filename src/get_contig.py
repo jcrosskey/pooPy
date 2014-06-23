@@ -10,7 +10,7 @@ import re
 ## Return -1 if the sequence does not exist or its sequence does not
 ## include the specified region.
 ## =================================================================
-def get_contig(fastaFile, seqID, start, end):
+def get_contig(fastaFile, seqID, start, end, limit):
     ''' Given a fasta file, find the sequence for the specific region of 
         a sequence with given ID. 
         Return -1 if the sequence does not exist or its sequence does not
@@ -29,16 +29,18 @@ def get_contig(fastaFile, seqID, start, end):
         sys.stderr.write("Please check input for starting and ending positiosn.\n")
         return -1
         
-    seq = ""
     fasta = open(fastaFile,'r') 
     line = fasta.readline()
-    sys.stdout.write('>{}\n'.format(seqID))
-    while line != "":
+    count = 0
+    while line != "" and (limit==-1 or count < limit):
         if line[0] == '>':
             thisID = line.strip().split()[0][1:] # sequence ID until the first space
-            if thisID == seqID:
+            if seqID in thisID :
+                count += 1
+                seq = ""
+                sys.stdout.write('>{}\n'.format(thisID))
                 nextline = fasta.readline().strip("\n")
-                while nextline!='' and nextline[0] != '>' and (len(seq)<=end or end==-1):
+                while nextline!='' and nextline[0] != '>' and (end==-1 or len(seq)<=end):
                     seq += nextline
                     nextline = fasta.readline().strip("\n")
                 if start <= end and end <= len(seq):
@@ -71,6 +73,7 @@ parser.add_argument("-i","--in",help="input fasta file",dest='fastaFile',require
 parser.add_argument("-n","--name",help="ID of the sequence to find",dest='seqID',required=True)
 parser.add_argument("-s","--start",help="1-based starting position of the sequence",dest='start',default=1, type=int)
 parser.add_argument("-e","--end",help="1-based ending position of the sequence",dest='end',default=-1, type=int)
+parser.add_argument("-l","--limit",help="maximum number of sequences to return",dest='limit',default=-1, type=int)
 
 ## output directory
 #parser.add_argument("-o","--out",help="output directory",dest='outputDir',required=True)
@@ -83,7 +86,7 @@ def main(argv=None):
     if argv is None:
         args = parser.parse_args()
 
-    get_contig(args.fastaFile,args.seqID,args.start,args.end)
+    get_contig(args.fastaFile,args.seqID,args.start,args.end, args.limit)
 
 ##==============================================================
 ## call from command line (instead of interactively)
