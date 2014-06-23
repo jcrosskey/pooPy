@@ -7,7 +7,7 @@ import re
 ## =================================================================
 ## Find length of all sequences in a fasta file
 ## =================================================================
-def count_bps(fastaFile,countFile):
+def count_bps(fastaFile,countFile,trim_string=''):
     ''' Find length of all sequences in a fasta file
 
         Input:  fastaFile - file that includes filtered subreads
