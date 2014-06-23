@@ -32,10 +32,12 @@ def get_contig(fastaFile, seqID, start, end, limit):
     fasta = open(fastaFile,'r') 
     line = fasta.readline()
     count = 0
+    nextline = ''
     while line != "" and (limit==-1 or count < limit):
         if line[0] == '>':
             thisID = line.strip().split()[0][1:] # sequence ID until the first space
             if seqID in thisID :
+                #print thisID
                 count += 1
                 seq = ""
                 sys.stdout.write('>{}\n'.format(thisID))
@@ -51,10 +53,15 @@ def get_contig(fastaFile, seqID, start, end, limit):
                     sys.stderr.write("end position passed end of the sequence!\n")
                     sys.stdout.write('{}\n'.format(seq[(start - 1):]))
                     return -1
-        line = fasta.readline()
+        if nextline != '' and nextline[0] == '>':
+            line = nextline # look into  header line that was read just now
+            nextline = ''
+        else:
+            line = fasta.readline()
     if seq == "":
         sys.stderr.write("sequence {} was not found in file {}!\n".format(seqID, fastaFile))
         return -1
+    fasta.close()
                     
 ## =================================================================
 ## argument parser
