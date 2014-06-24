@@ -22,17 +22,21 @@ def count_passes(fastaFile,countFile):
         
     fasta = open(fastaFile,'r') 
     passes = dict()
+    lengths = dict()
     with open(fastaFile,'r') as fasta:
         for line in fasta:
             if line[0] == '>':
                 seqID = line[1:line.rfind('/')]
+                length = int((line.rfind('_')+1):line.rfind('\n')) - int((line.rfind('/')+1):line.rfind('_'))
                 if passes.has_key(seqID):
                     passes[seqID] += 1
+                    lengths[seqID].append(length)
                 else:
                     passes[seqID] = 1
+                    lengths[seqID] = [length]
     mycount = open(countFile,'w')
     for seqID in passes:
-        mycount.write("{}\t{}\n".format(seqID, passes[seqID]))
+        mycount.write("{}\t{}\t{}\t{}\n".format(seqID, passes[seqID],min(lengths[seqID]), max(lengths[seqID])))
     mycount.close()
                     
 ## =================================================================
