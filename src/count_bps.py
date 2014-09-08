@@ -53,7 +53,6 @@ parser.add_argument("-o","--out",help="output directory",dest='countFile',requir
 ## main function
 ## =================================================================
 def main(argv=None):
-    
     if argv is None:
         args = parser.parse_args()
 
