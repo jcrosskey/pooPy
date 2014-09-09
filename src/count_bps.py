@@ -7,7 +7,7 @@ import re
 ## =================================================================
 ## Find length of all sequences in a fasta file
 ## =================================================================
-def count_bps(fastaFile,countFile,trim_string=''):
+def count_bps(fastaFile,countFile,trim_string=None):
     ''' Find length of all sequences in a fasta file
 
         Input:  fastaFile - file that includes filtered subreads
@@ -19,6 +19,7 @@ def count_bps(fastaFile,countFile,trim_string=''):
         
     fasta = open(fastaFile,'r') 
     mycount = open(countFile,'w')
+    seqID = ''
     seqLen = 0
     with open(fastaFile,'r') as fasta:
         for line in fasta:
@@ -27,8 +28,12 @@ def count_bps(fastaFile,countFile,trim_string=''):
                     mycount.write("{}\t{}\n".format(seqID, seqLen))
                     seqLen = 0
                 seqID = line.strip()[1:]
+                if trim_string is not None:
+                    seqID = seqID.split(trim_string)[0]
             else:
                 seqLen += len(line.strip('\n'))
+    # write the length of the last sequence
+    mycount.write("{}\t{}".format(seqID, seqLen))
     mycount.close()
                     
 ## =================================================================
@@ -45,6 +50,7 @@ parser = argparse.ArgumentParser(description="count number of bps for each seque
 
 ## input files and directories
 parser.add_argument("-i","--in",help="input fasta file",dest='fastaFile',required=True)
+parser.add_argument("-t","--trim",help="string/character where the read name is trimmed",dest='trim_string',default=None)
 
 ## output directory
 parser.add_argument("-o","--out",help="output directory",dest='countFile',required=True)
@@ -56,7 +62,7 @@ def main(argv=None):
     if argv is None:
         args = parser.parse_args()
 
-    count_bps(args.fastaFile, args.countFile)
+    count_bps(args.fastaFile, args.countFile, args.trim_string)
 ##==============================================================
 ## call from command line (instead of interactively)
 ##==============================================================
