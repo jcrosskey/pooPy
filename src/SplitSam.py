@@ -39,7 +39,7 @@ def SplitSam(samFile,outputDir,rname=None):
                 elif line[1:3] == 'PG':
                     PGline = line
                 elif line[1:3] == 'SQ':
-                    RefName = line.strip('\n').split()[1][3:] # the name of refseq
+                    RefName = line.strip('\n').split('\t')[1][3:] # the name of refseq
                     if rname != None and RefName == rname:
                         RefFile = outputDir + '/' + re.sub('/','__',RefName) + '.sam'
                         RefFileHandle = open(RefFile,'a')
@@ -54,6 +54,7 @@ def SplitSam(samFile,outputDir,rname=None):
                 if not headerLinesWritten: # write the common header lines to each sam file
                     for key in Refs:
                         Refs[key].write(HDline + SQDict[key] + RGline + PGline)
+                        #sys.stdout.write(HDline + SQDict[key] + RGline + PGline)
                     headerLinesWritten = True
                 refName = line.split('\t')[2] # write this line to the corresponding sam file
                 #print refName
@@ -77,7 +78,7 @@ parser = argparse.ArgumentParser(description="Split a big alignement .sam file i
 
 ## input files and directories
 parser.add_argument("-i","--in",help="input sam file",dest='samFile',required=True)
-parser.add_argument("-r","--ref",help="reference sequence name to extract",dest='rname')
+parser.add_argument("-r","--ref",help="reference sequence name to extract",dest='rname',default=None)
 
 ## output directory
 parser.add_argument("-o","--out",help="output directory",dest='outputDir',required=True)
