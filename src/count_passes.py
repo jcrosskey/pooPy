@@ -55,7 +55,7 @@ parser = argparse.ArgumentParser(description="count number of passes for each ZM
 parser.add_argument("-i","--in",help="input fasta file",dest='fastaFile',required=True)
 
 ## output directory
-parser.add_argument("-o","--out",help="output directory",dest='countFile',required=True)
+parser.add_argument("-o","--out",help="output file",dest='countFile',required=True)
 
 ## =================================================================
 ## main function
