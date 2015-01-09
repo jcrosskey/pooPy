@@ -121,10 +121,10 @@ def samStat_pysam(samFile, outputFile):
 ## =================================================================
 ## samStat function without using pysam, which is unstable sometimes
 ## =================================================================
-def samStat(samFile, outputFile):
+def samStat(samFile, outputFile, removeSlash=False):
     ''' From resulted sam or bam file of mapping, find information of reference sequences and reads.
         For reference sequences: 
-        1. coverage percentage
+        1. base coverage percentage
         2. coverage depth at each base pair
         3. error rate/number (ins, del, sub)
         4. number of reads mapped to it
@@ -136,7 +136,8 @@ def samStat(samFile, outputFile):
         Input:
         1. samFile: sam (bam) file name
         2. outputFile: file for writing output
-        3. fileformat: either sam or bam, should do auto detect..
+        3. removeSlash: whether or not to remove characters from the last slash sign in the read name (BLASR sometimes automatically append these)
+        4. 
     '''
     nReferences = 0 # number of reference sequences
     refLens = [] # list of reference length
