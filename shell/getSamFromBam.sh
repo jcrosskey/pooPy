@@ -11,4 +11,4 @@ python /Users/cjg/pooPy/src/get_contig.py -i $pFasta -n $pName -l 1 > ${pfilenam
 
 echo second generate sam file
 samtools view -o ${pfilename}.bam -b $bamFile $pName
-samtools sort ${pfilename}.bam
+samtools index ${pfilename}.bam
