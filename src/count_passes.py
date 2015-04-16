@@ -27,7 +27,11 @@ def count_passes(fastaFile,countFile):
         for line in fasta:
             if line[0] == '>':
                 seqID = line[1:line.rfind('/')]
-                length = int(line[(line.rfind('_')+1):line.rfind('\n')]) - int(line[(line.rfind('/')+1):line.rfind('_')])
+                if "String Length" in line:
+                    length = int(line.strip("\n").split()[-1])
+                else:
+                    line = line.strip("\n").split()[0]
+                    length = int(line[(line.rfind('_')+1):]) - int(line[(line.rfind('/')+1):line.rfind('_')])
                 if passes.has_key(seqID):
                     passes[seqID] += 1
                     lengths[seqID].append(length)
