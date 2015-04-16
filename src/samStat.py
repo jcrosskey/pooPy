@@ -146,7 +146,7 @@ def samStat(samFile, outputFile, removeSlash=False):
 
     # dictionaries for the reference sequences and the read sequences
     refSeq_dict = dict()
-    readSeq_dict = dict()
+    #readSeq_dict = dict()
 
     sys.stdout.write(">> Scan sam file \n")
     # start scanning sam file
@@ -177,8 +177,8 @@ def samStat(samFile, outputFile, removeSlash=False):
                     refLen = refLens[refNames.index(rname)] # length of the reference sequence
                     refSeq_dict[rname] = {'refLen':refLen, 'nReads':0, 'nReadsBp':0, 'nMatchBp':0,'nInsBp':0, 'nDelBp':0, 'nSubBp':0, 'nEdit':0,'coverage':[0]*refLen}
 
-                if not readSeq_dict.has_key(qname):
-                    readSeq_dict[qname] = {'nMapping':0, 'mapInfo':list()}
+                #if not readSeq_dict.has_key(qname):
+                #    readSeq_dict[qname] = {'nMapping':0, 'mapInfo':list()}
 
                 #print qname, '\t', rname, '\t', refLen
 
@@ -188,7 +188,7 @@ def samStat(samFile, outputFile, removeSlash=False):
 
                 ## update the dictionary corresponding to the reference sequence
                 refSeq_dict[rname]['nReads'] += 1 # update number of mapped reads
-                readSeq_dict[qname]['nMapping'] += 1 # update number of mappings
+                #readSeq_dict[qname]['nMapping'] += 1 # update number of mappings
 
                 refSeq_dict[rname]['nReadsBp'] += cigarLens['seq_len'] # update number of bps mapped to this ref seq
                 # update matching and substitution bps if possible
@@ -212,7 +212,7 @@ def samStat(samFile, outputFile, removeSlash=False):
                 # start and end positions for both the query read and the ref seq
                 # is this a secondary alignment?
                 # is this a reverse complement?
-                readSeq_dict[qname]['mapInfo'].append((read['qstart'],read['qend'], read['rstart'], read['rend'], read['is_secondary_alignment'], read['is_reversecomplement'],read['NM'],rname))
+                #readSeq_dict[qname]['mapInfo'].append((read['qstart'],read['qend'], read['rstart'], read['rend'], read['is_secondary_alignment'], read['is_reversecomplement'],read['NM'],rname))
 
                 if count % 10000 == 0:
                     sys.stdout.write('  scanned {} records\n'.format(count))
@@ -236,17 +236,17 @@ def samStat(samFile, outputFile, removeSlash=False):
     myout1.close()
 
     # print out statistics information for the reads
-    myout2 = open(outputFile+".read", 'w')
-    myout2.write("{}\t{}\t{}\n".format('readName', 'nMappings','Mappings'))
-    for key in readSeq_dict:
-        d = readSeq_dict[key]
-        myout2.write("{}\t{}\t".format(key, d['nMapping']))
-        for thismap in d['mapInfo']:
-            # qstart, qend # rstart, rend # secondary # forward/backward @  edit distance, refName
-            myout2.write("({}, {} # {}, {} # {} # {} @ {}, {})".format(thismap[0],thismap[1],thismap[2],thismap[3],-1 if thismap[4] else 1, -1 if thismap[5] else 1,thismap[6],thismap[7]))
-        myout2.write("\n")
+    #myout2 = open(outputFile+".read", 'w')
+    #myout2.write("{}\t{}\t{}\n".format('readName', 'nMappings','Mappings'))
+    #for key in readSeq_dict:
+    #    d = readSeq_dict[key]
+    #    myout2.write("{}\t{}\t".format(key, d['nMapping']))
+    #    for thismap in d['mapInfo']:
+    #        # qstart, qend # rstart, rend # secondary # forward/backward @  edit distance, refName
+    #        myout2.write("({}, {} # {}, {} # {} # {} @ {}, {})".format(thismap[0],thismap[1],thismap[2],thismap[3],-1 if thismap[4] else 1, -1 if thismap[5] else 1,thismap[6],thismap[7]))
+    #    myout2.write("\n")
 
-    myout2.close()
+    #myout2.close()
 ## =================================================================
 ## argument parser
 ## =================================================================
