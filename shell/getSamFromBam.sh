@@ -7,8 +7,8 @@ pName=$3 # pacbio read name
 pfilename=${pName//\//__}
 
 echo first generate fasta file
-python /Users/cjg/pooPy/src/get_contig.py -i $pFasta -n $pName -l 1 > ${pfilename}.fasta
+python ../src/get_contig.py -i $pFasta -n $pName -l 1 > ${pfilename}.fasta
 
-echo second generate sam file
+echo second generate bam file
 samtools view -o ${pfilename}.bam -b $bamFile $pName
 samtools index ${pfilename}.bam
