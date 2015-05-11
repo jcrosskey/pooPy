@@ -202,7 +202,7 @@ def samStat(samFile, outputFile, removeSlash=False):
 
                 # update edit distance
                 if read['NM'] is not None:
-                    refSeq_dict[rname]['nEdit'] += 1
+                    refSeq_dict[rname]['nEdit'] += read['NM']
 
                 # update the coverage at the mapped positions
                 for apos in read['positions']:
