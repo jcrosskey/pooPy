@@ -19,13 +19,14 @@ import argparse
 def getReadFromFasta(fin):
     output = ""
     for line in fin:
-        if line[0] != ">":
-            output += line
-        else:
-            yield output
-            output = line
+        if line.strip("\n").strip() != "":
+            if line[0] != ">":
+                output += line
+            else:
+                if output != "":
+                    yield output
+                output = line
     yield output
-
 
 def getReadFromFastq(fin):
     output = ""
@@ -40,11 +41,22 @@ def getReadFromFastq(fin):
             count = 1
     yield output
 
+def getHMMFromFile(fin):
+    output = ""
+    length = 0
+    for line in fin:
+        output += line
+        if line[:4] == "LENG":
+            length = int(line[5:-1].strip())
+        elif line == "//\n":
+            yield output, length
+    if len(output) > 0:
+        yield output,length
 
 ## =================================================================
 ## Function: splitReads
 ## =================================================================
-def splitReads(inputFile, prefix, count):
+def splitReads(inputFile, prefix, count, summary):
     ''' Split big fasta/fastq file into smaller ones, each contains a number of reads.
         Input:  inputFile - big file to split
                 count - number of reads in each small file
@@ -57,36 +69,69 @@ def splitReads(inputFile, prefix, count):
         fileType = "fasta" 
     elif fileExt in ["fq", "Fq", "fastq", "Fastq"]:  # either fa or fq
         fileType = "fastq" 
+    elif fileExt == "hmm":
+        fileType = "hmm"
     else:
         sys.stderr.write("File type is not correct...\n") 
 
 
     fileCount = 1
-    outFileName = "{}_{:03}.{}".format(prefix, fileCount, fileType)
+    summary.write("file_name\tmax_len\tmin_len\n")
+    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
     fout = open(outFileName, 'w')
     readCount = 0
+    max_read_len = 0
+    min_read_len = 100000
     with open(inputFile,'r') as fin:
         if fileType == "fastq":
             for readLines in getReadFromFastq(fin):
                 fout.write(readLines)
+                seq_len = len(readLines.split("\n"[1]))
+                max_read_len = max_read_len if max_read_len > seq_len else seq_len
+                min_read_len = min_read_len if min_read_len < seq_len else seq_len
                 readCount = readCount + 1
                 if readCount == count:
                     fout.close()
+                    summary.write("{}\t{}\t{}\n".format(outFileName, max_read_len, min_read_len))
+                    max_read_len = 0
+                    min_read_len = 100000
                     fileCount = fileCount + 1
-                    outFileName = "{}_{:03}.{}".format(prefix, fileCount, fileType)
+                    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
                     fout = open(outFileName, 'w')
                     readCount = 0
         elif fileType == "fasta":
             for readLines in getReadFromFasta(fin):
                 fout.write(readLines)
+                seq_len = sum(map(len, readLines.split("\n")[1:]))
+                max_read_len = max_read_len if max_read_len > seq_len else seq_len
+                min_read_len = min_read_len if min_read_len < seq_len else seq_len
                 readCount = readCount + 1
                 if readCount == count:
                     fout.close()
+                    summary.write("{}\t{}\t{}\n".format(outFileName, max_read_len, min_read_len))
+                    max_read_len = 0
+                    min_read_len = 100000
                     fileCount = fileCount + 1
-                    outFileName = "{}_{:03}.{}".format(prefix, fileCount, fileType)
+                    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
+                    fout = open(outFileName, 'w')
+                    readCount = 0
+        elif fileType == "hmm":
+            for readLines,hmm_len in getHMMFromFile(fin):
+                fout.write(readLines)
+                max_read_len = max_read_len if max_read_len > hmm_len else hmm_len
+                min_read_len = min_read_len if min_read_len < hmm_len else hmm_len
+                readCount = readCount + 1
+                if readCount == count:
+                    fout.close()
+                    summary.write("{}\t{}\t{}\n".format(outFileName, max_read_len, min_read_len))
+                    max_read_len = 0
+                    min_read_len = 100000
+                    fileCount = fileCount + 1
+                    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
                     fout = open(outFileName, 'w')
                     readCount = 0
 
+    summary.write("{}\t{}\t{}\n".format(outFileName, max_read_len, min_read_len))
     fout.close()
 
 
@@ -107,6 +152,7 @@ parser.add_argument("-i","--in",help="input sequence file",dest='seqFile',requir
 
 ## output directory
 parser.add_argument("-o","--out",help="output prefix",dest='outputPrefix',required=False)
+parser.add_argument("-s","--summary",help="summary file",dest='summary',required=False, type=argparse.FileType('w'),default=sys.stdout)
 
 ## options
 parser.add_argument("-c", "--count", help="number of sequences per file", dest='seqCount', required=False, default=10000, type=int)
@@ -132,7 +178,7 @@ def main(argv=None):
     sys.stderr.write("\n===========================================================\n")
     start_time = time.time()
 
-    splitReads(args.seqFile, args.outputPrefix, args.seqCount)
+    splitReads(args.seqFile, args.outputPrefix, args.seqCount, args.summary)
     #with open(args.seqFile, 'r') as fin:
     #    for a in getReadFromFastq(fin):
     #        sys.stdout.write(">>>>\n{}".format(a))
