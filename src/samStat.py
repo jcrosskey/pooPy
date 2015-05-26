@@ -191,18 +191,20 @@ def samStat(samFile, outputFile, removeSlash=False):
                 #readSeq_dict[qname]['nMapping'] += 1 # update number of mappings
 
                 refSeq_dict[rname]['nReadsBp'] += cigarLens['seq_len'] # update number of bps mapped to this ref seq
-                # update matching and substitution bps if possible
-                if cigarLens['match_len'] is not None:
-                    refSeq_dict[rname]['nMatchBp'] += cigarLens['match_len']
-                if cigarLens['sub_len'] is not None:
-                    refSeq_dict[rname]['nSubBp'] += cigarLens['sub_len']
-
                 refSeq_dict[rname]['nInsBp'] += cigarLens['ins_len'] # update number of insertion bps
                 refSeq_dict[rname]['nDelBp'] += cigarLens['del_len'] # update number of deletion bps
 
                 # update edit distance
                 if read['NM'] is not None:
                     refSeq_dict[rname]['nEdit'] += read['NM']
+                    if cigarLens['sub_len'] is None:
+                        cigar_lens['sub_len'] = read['NM'] - cigarLens['ins_len'] - cigarLens['del_len']
+
+                # update matching and substitution bps if possible
+                if cigarLens['match_len'] is not None:
+                    refSeq_dict[rname]['nMatchBp'] += cigarLens['match_len']
+                if cigarLens['sub_len'] is not None:
+                    refSeq_dict[rname]['nSubBp'] += cigarLens['sub_len']
 
                 # update the coverage at the mapped positions
                 for apos in read['positions']:
