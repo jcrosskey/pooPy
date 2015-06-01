@@ -198,7 +198,7 @@ def samStat(samFile, outputFile, removeSlash=False):
                 if read['NM'] is not None:
                     refSeq_dict[rname]['nEdit'] += read['NM']
                     if cigarLens['sub_len'] is None:
-                        cigar_lens['sub_len'] = read['NM'] - cigarLens['ins_len'] - cigarLens['del_len']
+                        cigarLens['sub_len'] = read['NM'] - cigarLens['ins_len'] - cigarLens['del_len']
 
                 # update matching and substitution bps if possible
                 if cigarLens['match_len'] is not None:

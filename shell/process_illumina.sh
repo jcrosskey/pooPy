@@ -66,12 +66,13 @@ cat > merge.sh <<MergePariedEndReadsScriptWriting
 # -r read-len
 # -f fragment-len
 # -s fragment-len-stddev
-flash -r 150 -f 270 -s 30 -o flash_merge -d $PWD --interleaved-output -t 16 ${prefix}_pe_trimmed_corrected_1.fastq ${prefix}_pe_trimmed_corrected_2.fastq 
+flash -r 251 -f 400 -s 40 -o flash_merge -d $PWD --interleaved-output -t 16 ${prefix}_pe_trimmed_corrected_1.fastq ${prefix}_pe_trimmed_corrected_2.fastq 
 
 qsub dup_con.sh
 MergePariedEndReadsScriptWriting
 chmod u+x merge.sh
 
+merged_fastq=flash_merge.extendedFrags.fastq
 #==================================
 # remove duplicated and contained reads
 #==================================
@@ -80,13 +81,13 @@ cat > dup_con.sh <<DeduplicationScriptWriting
 
 #PBS -N dup_con_${prefix}
 #PBS -q medium
-#PBS -l nodes=1:ppn=8
+#PBS -l nodes=1:ppn=40
 #PBS -l walltime=24:00:00
 #PBS -d ${work_dir}
 #PBS -j oe
 #PBS -o dup_con.out
 
-/chongle/qiuming/align_test/Release/align_test -i RemoveContainedReads --subject ... --query ... -l 40 -t 8 -m 0 --out ...
+/chongle/qiuming/align_test/Release/align_test -i RemoveContainedReads --subject ${merged_fastq} --query ${merged_fastq} -ht omega -l 40 -t 40 --ID 0 --out ${prefix}_unique.fasta
 DeduplicationScriptWriting
 chmod u+x dup_con.sh
 
