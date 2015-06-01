@@ -22,7 +22,7 @@ cat > trim.sh <<TrimmingScriptWriting
 #PBS -d ${work_dir}
 #PBS -j oe
 #PBS -o trim.out
-sickle -pe -c ${in_reads} -t sanger -m ${prefix}_pe.fastq -s ${prefix}_se.fastq -l 60 -q 20 -n
+sickle pe -c ${in_reads} -t sanger -m ${prefix}_pe.fastq -s ${prefix}_se.fastq -l 60 -q 20 -n
 qsub ec.sh
 TrimmingScriptWriting
 chmod u+x trim.sh
