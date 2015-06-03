@@ -98,7 +98,7 @@ def splitReads(inputFile, prefix, count, summary, bpcount):
                     max_read_len = 0
                     min_read_len = 100000
                     fileCount = fileCount + 1
-                    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
+                    outFileName = "{}{}.{}".format(prefix, fileCount, fileType)
                     fout = open(outFileName, 'w')
                     readCount = 0
         elif fileType == "fasta":
@@ -114,7 +114,7 @@ def splitReads(inputFile, prefix, count, summary, bpcount):
                     max_read_len = 0
                     min_read_len = 100000
                     fileCount = fileCount + 1
-                    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
+                    outFileName = "{}{}.{}".format(prefix, fileCount, fileType)
                     fout = open(outFileName, 'w')
                     readCount = 0
         elif fileType == "hmm":
@@ -129,7 +129,7 @@ def splitReads(inputFile, prefix, count, summary, bpcount):
                     max_read_len = 0
                     min_read_len = 100000
                     fileCount = fileCount + 1
-                    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
+                    outFileName = "{}{}.{}".format(prefix, fileCount, fileType)
                     fout = open(outFileName, 'w')
                     readCount = 0
     fout.close()
