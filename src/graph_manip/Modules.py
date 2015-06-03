@@ -101,43 +101,51 @@ class Graph:
     def __str__(self):
         return 'Graph with %d nodes and %d edges' % (self.get_num_reads(), self.get_num_edges()) 
 
-    def subgraph_node(self, read_id, depth=10, quiet=False):
-        ''' Get all the edges "depth" steps away from a specific read_id '''
+    def subgraph_node(self, read_ids, depth=10, quiet=False):
+        ''' Get all the edges "depth" steps away from a list of read_ids '''
         edge_ids = []
-        read = self.reads[read_id]
-        read_neighbors = set(read.get_neighbors())
+        if type(read_ids) is not list:
+            read_ids = [read_ids]
+        read_ids = list(set(read_ids))
+        reads = [self.reads.get(x,None) for x in read_ids] # reads corresponding to the read_ids, if read_id does not exist, read = None
+        reads = [x for x in reads if x is not None] # Filter out None's in the read list
+        sys.stderr.write("{} read(s) in the graph.\n".format(len(reads)))
+        if len(reads) == 0:
+            sys.stderr.write('Nodes are not in graph.\n')
+            sys.exit()
+        read_neighbors = set(sum([x.get_neighbors() for x in reads], []))
         if len(read_neighbors) == 0:
-            sys.stderr.write('Read %d does not have neighbors\n' % read_id)
-        else:
-            adj_edges = read.list_of_edges
-            edge_ids += [x.edge_id for x in adj_edges]
-            d = 1
-            finished_read_ids = [read_id]
+            sys.stderr.write('Specified reads do not have neighbors\n')
+            sys.exit()
+        adj_edges = sum([read.list_of_edges for read in reads],[]) # adjacent edges of those reads
+        edge_ids += list(set([x.edge_id for x in adj_edges])) # unique edge ids for these edges
+        d = 1
+        finished_read_ids = read_ids
+        new_neighbors = []
+        while d < depth:
             new_neighbors = []
-            while d < depth:
-                new_neighbors = []
-                new_edge_ids = []
-                for r_id in read_neighbors: # for all the depth d neighbors
-                    if r_id not in finished_read_ids: # if it's not traversed already
-                        r = self.reads[r_id]
-                        new_neighbors += r.get_neighbors() # find its neighbors
-                        new_edge_ids += [x.edge_id for x in r.list_of_edges]
-                        finished_read_ids.append(r_id)
-                d +=1 
-                new_neighbors = set(new_neighbors) - set(finished_read_ids)
-                new_edge_ids = set(new_edge_ids) - set(edge_ids)
-                if len(new_neighbors) == 0 and not quiet:
-                    sys.stderr.write("no more new neighbors\n")
-                    break
-                elif len(new_edge_ids) == 0 and not quiet:
-                    sys.stderr.write("no more new edges\n")
-                    break
-                else:
-                    read_neighbors = new_neighbors
-                    edge_ids += list(new_edge_ids)
-            read_ids = finished_read_ids + list(new_neighbors)
-            if not quiet:
-                sys.stderr.write("At depth %d, starting from %d, %d nodes and %d edges in total.\n" % (d, read_id, len(read_ids),len(edge_ids)))
+            new_edge_ids = []
+            for r_id in read_neighbors: # for all the depth d neighbors
+                if r_id not in finished_read_ids: # if it's not traversed already
+                    r = self.reads[r_id]
+                    new_neighbors += r.get_neighbors() # find its neighbors
+                    new_edge_ids += [x.edge_id for x in r.list_of_edges]
+                    finished_read_ids.append(r_id)
+            d +=1 
+            new_neighbors = set(new_neighbors) - set(finished_read_ids)
+            new_edge_ids = set(new_edge_ids) - set(edge_ids)
+            if len(new_neighbors) == 0 and not quiet:
+                sys.stderr.write("no more new neighbors\n")
+                break
+            elif len(new_edge_ids) == 0 and not quiet:
+                sys.stderr.write("no more new edges\n")
+                break
+            else:
+                read_neighbors = new_neighbors
+                edge_ids += list(new_edge_ids)
+        read_ids = finished_read_ids + list(new_neighbors)
+        if not quiet:
+            sys.stderr.write("At depth %d, %d nodes and %d edges in total.\n" % (d, len(read_ids),len(edge_ids)))
         return read_ids, edge_ids
 
     def print_subgraph(self, read_ids, edge_ids, out=sys.stdout):

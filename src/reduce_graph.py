@@ -28,7 +28,8 @@ parser = argparse.ArgumentParser(description="Extract subgraph from a big graph,
 parser.add_argument("-i","--in",help="input graph file (in .gdl format)",dest='gdlFile',required=True)
 
 ## other input
-parser.add_argument("-n","--node",help="starting node",dest='node', required=True, type = int)
+parser.add_argument("-n","--node",help="starting node",dest='node',nargs='+', type = int)
+parser.add_argument("-f","--nodefile",help="file including nodes",dest='nodefile', type = argparse.FileType('r'))
 
 ## output directory
 parser.add_argument("-o","--out",help="output file",dest='outFile', default=sys.stdout, type=argparse.FileType('w'))
@@ -47,12 +48,23 @@ def main(argv=None):
     if args.verbose:
         sys.stderr.write("Input file is {}\n".format(args.gdlFile))
         sys.stderr.write("Output file is {}\n".format(args.outFile))
+        if args.nodefile is not None:
+            sys.stderr.write("Starting from node file: {} \n".format(args.nodefile))
 
     sys.stderr.write("\n===========================================================\n")
     start_time = time.time()
 
-    g = Graph(args.gdlFile)
-    g.get_subgraph_read(args.node, args.depth, args.outFile)
+    if args.node is None:
+        args.node = []
+    if args.nodefile is not None:
+        args.node += map(int, re.findall(r'\d+', args.nodefile.read()))
+    if len(args.node) > 0:
+        if args.verbose:
+            sys.stderr.write("Starting from nodes: {} \n".format(",".join(map(str,args.node))))
+        g = Graph(args.gdlFile)
+        g.get_subgraph_read(args.node, args.depth, args.outFile)
+    else:
+        sys.stderr.write("There is no node specified.\n")
 
     sys.stderr.write("total time :" + str(time.time() - start_time) +  " seconds")
     sys.stderr.write("\n===========================================================\nDone\n")
