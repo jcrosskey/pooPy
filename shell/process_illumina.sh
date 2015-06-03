@@ -2,13 +2,14 @@
 
 # pipeline used to process Illumina reads #
 # Usage: process_illumina.sh *.fastq #
-echo Usage: process_illumina.sh *.fastq 
+echo 'Usage: process_illumina.sh *.fastq'
 
 in_reads=$1 # input file as interleaved paired end reads in fastq format
 work_dir=`pwd`
 prefix=`basename $1`
 prefix=${prefix%%\.*}
-
+mkdir $prefix
+cd $prefix
 #==================================
 # trimming
 #==================================
@@ -19,10 +20,10 @@ cat > trim.sh <<TrimmingScriptWriting
 #PBS -q medium
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=24:00:00
-#PBS -d ${work_dir}
+#PBS -d ${work_dir}/${prefix}
 #PBS -j oe
 #PBS -o trim.out
-sickle pe -c ${in_reads} -t sanger -m ${prefix}_pe.fastq -s ${prefix}_se.fastq -l 60 -q 20 -n
+sickle pe -c ../${in_reads} -t sanger -m ${prefix}_pe.fastq -s ${prefix}_se.fastq -l 60 -q 20 -n
 qsub ec.sh
 TrimmingScriptWriting
 chmod u+x trim.sh
@@ -37,7 +38,7 @@ cat > ec.sh <<ErrorCorrectionScriptWriting
 #PBS -q medium
 #PBS -l nodes=1:ppn=48
 #PBS -l walltime=24:00:00
-#PBS -d ${work_dir}
+#PBS -d ${work_dir}/${prefix}
 #PBS -j oe
 #PBS -o ec.out
 
@@ -57,7 +58,7 @@ cat > merge.sh <<MergePariedEndReadsScriptWriting
 #PBS -q medium
 #PBS -l nodes=1:ppn=16
 #PBS -l walltime=24:00:00
-#PBS -d ${work_dir}
+#PBS -d ${work_dir}/${prefix}
 #PBS -j oe
 #PBS -o merge.out
 
@@ -66,9 +67,9 @@ cat > merge.sh <<MergePariedEndReadsScriptWriting
 # -r read-len
 # -f fragment-len
 # -s fragment-len-stddev
-flash -r 251 -f 400 -s 40 -o flash_merge -d $PWD --interleaved-output -t 16 ${prefix}_pe_trimmed_corrected_1.fastq ${prefix}_pe_trimmed_corrected_2.fastq 
+flash -r 251 -f 400 -s 40 -o ${prefix}_flash_merge -d $PWD --interleaved-output -t 16 ${prefix}_pe_trimmed_corrected_1.fastq ${prefix}_pe_trimmed_corrected_2.fastq 
 
-qsub dup_con.sh
+#qsub dup_con.sh
 MergePariedEndReadsScriptWriting
 chmod u+x merge.sh
 
@@ -83,7 +84,7 @@ cat > dup_con.sh <<DeduplicationScriptWriting
 #PBS -q medium
 #PBS -l nodes=1:ppn=40
 #PBS -l walltime=24:00:00
-#PBS -d ${work_dir}
+#PBS -d ${work_dir}/${prefix}
 #PBS -j oe
 #PBS -o dup_con.out
 
