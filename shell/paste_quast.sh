@@ -6,7 +6,7 @@ then
 fi
 touch ref.txt
 cols=("Assembly" "# contigs (>= 0 bp)" "# contigs (>= 1000 bp)" "Total length (>= 0 bp)" "Total length (>= 1000 bp)" "# contigs  " "Largest contig" \
-	"Total length  " "Largest contig"  "Reference length" "GC (%)" "Reference GC (%)" "NG25" "N50" "NG50" "N75" "LG25" "L50" "LG50" "L75" \
+	"Total length  " "Largest contig"  "Reference length" "GC (%)" "Reference GC (%)" "N50" "NG50" "N75" "L50" "LG50" "L75" \
 	"# misassemblies" "# misassembled contigs" "Misassembled contigs length" "# local misassemblies" "# unaligned contigs" "Genome fraction" \
 	"Duplication ratio" "# mismatches per 100 kbp" "# indels per 100 kbp" "Largest alignment" "NA25" "NGA25" "NA50" "NGA50" "NA75" "LA25" "LGA25" "LA50" "LGA50" "LA75")
 #IFS=$'\n' read -d '' -r -a refNames < refNames.txt
