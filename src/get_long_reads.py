@@ -64,7 +64,7 @@ def get_long_reads(inputFile,outFile=None,cutoff=1000):
     with open(inputFile,'r') as fin:
         if fileType == "fastq":
             for readLines in getReadFromFastq(fin):
-                seq_len = len(readLines.split("\n"[1]))
+                seq_len = len(readLines.split("\n")[1])
                 if seq_len >= cutoff:
                     fout.write(readLines)
                     readCount += 1
