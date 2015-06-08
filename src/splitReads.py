@@ -78,7 +78,7 @@ def splitReads(inputFile, prefix, count, summary, bpcount):
 
     fileCount = 1
     summary.write("file_name\tmax_len\tmin_len\n")
-    outFileName = "{}{:03}.{}".format(prefix, fileCount, fileType)
+    outFileName = "{}{}.{}".format(prefix, fileCount, fileType)
     fout = open(outFileName, 'w')
     readCount = 0
     max_read_len = 0
