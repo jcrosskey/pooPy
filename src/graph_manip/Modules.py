@@ -109,7 +109,8 @@ class Graph:
         read_ids = list(set(read_ids))
         reads = [self.reads.get(x,None) for x in read_ids] # reads corresponding to the read_ids, if read_id does not exist, read = None
         reads = [x for x in reads if x is not None] # Filter out None's in the read list
-        sys.stderr.write("{} read(s) in the graph.\n".format(len(reads)))
+        sys.stderr.write("{} read(s) in the graph: ".format(len(reads)))
+        sys.stderr.write("{}\n".format(",".join(map(str,map(int, reads)))))
         if len(reads) == 0:
             sys.stderr.write('Nodes are not in graph.\n')
             sys.exit()
