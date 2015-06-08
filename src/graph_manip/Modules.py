@@ -17,6 +17,10 @@ class Read:
         return self.read_id
     def __eq__(self,other):
         return self.read_id == other.read_id
+    def __lt__(self, other):
+        return self.read_id < other.read_id
+    def name(self):
+        return str(self.read_id)
     def add_edge(self, edge):
         if edge not in self.list_of_edges:
             self.list_of_edges.append(edge)
@@ -110,7 +114,8 @@ class Graph:
         reads = [self.reads.get(x,None) for x in read_ids] # reads corresponding to the read_ids, if read_id does not exist, read = None
         reads = [x for x in reads if x is not None] # Filter out None's in the read list
         sys.stderr.write("{} read(s) in the graph: ".format(len(reads)))
-        sys.stderr.write("{}\n".format(",".join(map(str,map(int, reads)))))
+        reads.sort()
+        sys.stderr.write("{}\n".format(",".join([x.name() for x in reads])))
         if len(reads) == 0:
             sys.stderr.write('Nodes are not in graph.\n')
             sys.exit()
