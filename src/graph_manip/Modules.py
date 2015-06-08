@@ -89,7 +89,7 @@ class Graph:
                 self.reads[edge.source].add_edge(edge)
                 self.reads[edge.target].add_edge(edge)
         gdl.close()
-        print self
+        sys.stderr.write("{}\n".format(str(self)))
 
 
     def get_num_reads(self):
