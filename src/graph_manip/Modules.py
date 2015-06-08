@@ -150,6 +150,7 @@ class Graph:
                 read_neighbors = new_neighbors
                 edge_ids += list(new_edge_ids)
         read_ids = finished_read_ids + list(new_neighbors)
+        read_ids = [x for x in read_ids if (x in self.reads and len(self.reads[x].get_neighbors()) > 0) ]
         if not quiet:
             sys.stderr.write("At depth %d, %d nodes and %d edges in total.\n" % (d, len(read_ids),len(edge_ids)))
         return read_ids, edge_ids
