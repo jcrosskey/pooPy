@@ -4,10 +4,23 @@
 NO_ARGS=0
 E_OPTERROR=85
 SCRIPT=`basename $0`
+
+#format of the output
+BOLD="\x1b[1m"
+NORMAL="\x1b[00m"
+RED='\033[01;31m'
+GREEN='\033[01;32m'
+YELLOW='\033[01;33m'
+PURPLE='\033[01;35m'
+CYAN='\033[01;36m'
+WHITE='\033[01;37m'
+UNDERLINE='\033[4m'
+
 usage() { 
-	echo "Usage: ${SCRIPT} -p <prefix> <quast_output_dir>" >&2
-	echo "-p    --Prefix for the quast output files, required"
-	echo "-h    --Print this help message"
+	echo -e "${BOLD}${RED}${SCRIPT} ${NORMAL}parses quast output files and generate files for misassembled contigs IDs and their mapped coordinates\n"
+	echo -e "${BOLD}Usage: ${NORMAL}${SCRIPT} -p <prefix> <quast_output_dir>" >&2
+	echo -e "${BOLD}-p${NORMAL}    --Prefix for the quast output files, required"
+	echo -e "${BOLD}-h${NORMAL}    --Print this help message"
 }
 
 
