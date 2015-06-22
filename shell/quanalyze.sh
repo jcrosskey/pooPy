@@ -18,8 +18,8 @@ UNDERLINE='\033[4m'
 
 usage() { 
 	echo -e "${BOLD}${RED}${SCRIPT} ${NORMAL}parses quast output files and generate files for misassembled contigs IDs and their mapped coordinates\n"
-	echo -e "${BOLD}Usage: ${NORMAL}${SCRIPT} -p <prefix> <quast_output_dir>" >&2
-	echo -e "${BOLD}-p${NORMAL}    --Prefix for the quast output files, required"
+	echo -e "${BOLD}Usage: ${NORMAL}${SCRIPT} <quast_output_dir>" >&2
+	#echo -e "${BOLD}-p${NORMAL}    --Prefix for the quast output files, required"
 	echo -e "${BOLD}-h${NORMAL}    --Print this help message"
 }
 
@@ -30,7 +30,6 @@ then
 	usage
 	exit $E_OPTERROR
 fi
-
 while getopts ":hp:" opt 
 do
 	case $opt in
@@ -38,10 +37,10 @@ do
 			usage
 			exit 0
 			;;
-		p)
-			prefix=$OPTARG
-			echo "prefix for the output files is $OPTARG" >&2
-			;;
+#		p)
+#			prefix=$OPTARG
+#			echo "prefix for the output files is $OPTARG" >&2
+#			;;
 #		i)
 #			input=$OPTARG
 #			echo "input file is $OPTARG" >&2
@@ -64,9 +63,9 @@ done
 shift $((OPTIND-1))
 
 quast_dir=$1/contigs_reports
-mis_contig_fa=${quast_dir}/${prefix}.mis_contigs.fa
-contigs_report=${quast_dir}/contigs_report_${prefix}.stdout
-filtered_coords=${quast_dir}/nucmer_output/${prefix}.coords.filtered
+mis_contig_fa=$(find $quast_dir -name '*.mis_contigs.fa')
+contigs_report=$(find ${quast_dir} -name 'contigs_report_*.stdout')
+filtered_coords=$(find ${quast_dir}/nucmer_output -name '*.coords.filtered')
 
 echo '>>>Extract extensively misassembled contigs from' ${mis_contig_fa}
 grep '^>' ${mis_contig_fa} | sed 's/>//g' > ext_mis.id
