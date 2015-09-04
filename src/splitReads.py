@@ -66,7 +66,7 @@ def splitReads(inputFile, prefix, count, summary, bpcount):
         Output: prefix_03d.fasta/q
     '''
     fileExt = inputFile.split(".")[-1] # file type, fasta or fastq, autodetect
-    if fileExt in ["fa", "Fa", "fasta", "Fasta"]:  # either fa or fq
+    if fileExt in ["fa", "Fa", "faa", "Faa", "fna", "Fna", "fasta", "Fasta"]:  # either fa or fq
         fileType = "fasta" 
     elif fileExt in ["fq", "Fq", "fastq", "Fastq"]:  # either fa or fq
         fileType = "fastq" 
