@@ -209,7 +209,7 @@ query=\$(echo \${fastqs[@]} | tr " " ",")
 index=\$(( \$SGE_TASK_ID-1 ))
 /global/homes/p/pcl/Software/align_test/Release/align_test -i RemoveContainedReads \\
 	--subject \${fastqs[\$index]} --query \$query -ht single \\
-	-l 40 -k 39 -m 0 -t 16 -z 32000 --out ${outp}_unique_$SGE_TASK_ID.fasta
+	-l 40 -k 39 -m 0 -t 16 -z 32000 --out ${outp}_unique_\$SGE_TASK_ID.fasta
 
 qsub ${out_dir}/split_fasta.sh
 DeduplicationScriptWriting
@@ -269,7 +269,7 @@ index=\$(( \$SGE_TASK_ID-1 ))
 
 /global/homes/p/pcl/Software/align_test/Release/align_test -i ConstructOverlapGraph -ht single \\
 	--TransitiveReduction --query \${fastas[\$index]} --subject ${outp}_unique.fasta \\
-	--out ${outp}$SGE_TASK_ID.align \\
+	--out ${outp}\$SGE_TASK_ID.align \\
 	-l 40 -k 39 -m 0 -t 64 -z 64000
 AlignScriptWriting
 chmod u+x ${out_dir}/align.sh
