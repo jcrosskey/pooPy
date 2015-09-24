@@ -164,7 +164,7 @@ cat > ${out_dir}/split.sh <<SplitReadsScriptWriting
 #$ -l h_rt=12:00:00
 
 gunzip ${outp}_merged_EC_reformat.fq.gz
-if [[ find ${out_dir} -maxdepth 1 -type f -size -name "*_merged_EC_reformat.fq" +20G ]]
+if [[ find ${out_dir} -maxdepth 1 -type f -name "*_merged_EC_reformat.fq" -size +20G ]]
 then
 	python2.7 /global/homes/p/pcl/Software/poopy/src/splitReads.py -i ${outp}_merged_EC_reformat.fq \\
 	-o ${outp}_merged -c 10000000000 -bp
@@ -173,7 +173,7 @@ else
 fi
 
 gunzip ${outp}_unmerged_EC_reformat.fq.gz
-if [[ find ${out_dir} -maxdepth 1 -type f -size -name "*_unmerged_EC_reformat.fq" +20G ]]
+if [[ find ${out_dir} -maxdepth 1 -type f -name "*_unmerged_EC_reformat.fq" -size +20G ]]
 then
 	python2.7 /global/homes/p/pcl/Software/poopy/src/splitReads.py -i ${outp}_unmerged_EC_reformat.fq \\
 	-o ${outp}_unmerged -c 10000000000 -bp
@@ -231,11 +231,11 @@ cat > ${out_dir}/split_fasta.sh <<SplitFastaScriptWriting
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
 
-fastas=(${outp}_unique*.fasta)
+fastas=(${outp}_unique_*.fasta)
 awk -f /global/homes/p/pcl/Software/poopy/shell/rename_fasta.awk ${outp}_unique_*.fasta \\
 	&> ${outp}_unique.fasta
 
-if [[ find ${out_dir} -maxdepth 1 -type f -size -name "${prefix}_unique.fasta" +10G ]]
+if [[ find ${out_dir} -maxdepth 1 -type f -name "${prefix}_unique.fasta" -size +10G ]]
 then
 	python2.7 /global/homes/p/pcl/Software/poopy/src/splitReads.py -i ${outp}_unique.fasta \\
 	-o ${outp}_unique -c 10000000000 -bp
