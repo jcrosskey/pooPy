@@ -14,7 +14,7 @@ fi
 prefix=""
 out_dir=""
 
-while getopts ":i:o:ph" opt 
+while getopts ":i:o:p:h" opt 
 do
 	case $opt in
 		h)
@@ -73,6 +73,11 @@ fi
 if [ ! -d $out_dir ]
 then
 	mkdir -p $out_dir
+fi
+
+if [[ $out_dir != /* ]]
+then
+	out_dir=$PWD/${out_dir}
 fi
 
 echo Input file is $input
