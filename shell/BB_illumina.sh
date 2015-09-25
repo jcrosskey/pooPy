@@ -100,7 +100,6 @@ cat > ${out_dir}/trim_merge.sh <<TrimmingScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m abe
-#$ -j y
 #$ -l h_rt=12:00:00
 #$ -l ram.c=120G
 #$ -l exclusive.c
@@ -133,7 +132,6 @@ cat > ${out_dir}/ec.sh <<ErrorCorrectionScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m abe
-#$ -j y
 #$ -l h_rt=12:00:00
 #$ -l ram.c=120G
 #$ -l exclusive.c
@@ -165,29 +163,37 @@ cat > ${out_dir}/split.sh <<SplitReadsScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m abe
-#$ -j y
 #$ -l h_rt=12:00:00
 
-gunzip ${outp}_merged_EC_reformat.fq.gz
-if [[ find ${out_dir} -maxdepth 1 -type f -name "*_merged_EC_reformat.fq" -size +20G ]]
+if [[ -e ${outp}_merged_EC_reformat.fq.gz ]]
+then
+	gunzip ${outp}_merged_EC_reformat.fq.gz
+fi
+
+if [[ \$(find ${out_dir} -maxdepth 1 -type f -name "*_merged_EC_reformat.fq" -size +20G) ]]
 then
 	python2.7 /global/homes/p/pcl/Software/poopy/src/splitReads.py -i ${outp}_merged_EC_reformat.fq \\
-	-o ${outp}_merged -c 10000000000 -bp
+		-o ${outp}_merged -c 10000000000 -bp
 else
 	ln -s ${outp}_merged_EC_reformat.fq ${outp}_merged1.fastq
 fi
 
-gunzip ${outp}_unmerged_EC_reformat.fq.gz
-if [[ find ${out_dir} -maxdepth 1 -type f -name "*_unmerged_EC_reformat.fq" -size +20G ]]
+if [[ -e ${outp}_unmerged_EC_reformat.fq.gz ]]
+then
+	gunzip ${outp}_unmerged_EC_reformat.fq.gz
+fi
+
+if [[ \$(find ${out_dir} -maxdepth 1 -type f -name "*_unmerged_EC_reformat.fq" -size +20G) ]]
 then
 	python2.7 /global/homes/p/pcl/Software/poopy/src/splitReads.py -i ${outp}_unmerged_EC_reformat.fq \\
-	-o ${outp}_unmerged -c 10000000000 -bp
+		-o ${outp}_unmerged -c 10000000000 -bp
 else
 	ln -s ${outp}_unmerged_EC_reformat.fq ${outp}_unmerged1.fastq
 fi
 
 fastqs=(${outp}*merged[1-9]*.fastq)
-qsub -t 1-\$(echo \${#fastqs[@]}) ${out_dir}/dedup.sh
+num_fastqs=\${#fastqs[@]}
+qsub -t 1-\$num_fastqs ${out_dir}/dedup.sh
 
 SplitReadsScriptWriting
 chmod u+x ${out_dir}/split.sh
@@ -204,19 +210,24 @@ cat > ${out_dir}/dedup.sh <<DeduplicationScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m abe
-#$ -j y -o ${outp}_dedup.o
+#$ -o ${outp}_dedup.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
 
 
-fastqs=(${outp}*[1-9]*.fastq)
-query=\$(echo \${fastqs[@]} | tr " " ",")
+fastqs=(${outp}*merged[1-9]*.fastq)
+subject=\$(echo \${fastqs[@]} | tr " " ",")
 index=\$(( \$SGE_TASK_ID-1 ))
+query=\${fastqs[\$index]}
 /global/homes/p/pcl/Software/align_test/Release/align_test -i RemoveContainedReads \\
-	--subject \${fastqs[\$index]} --query \$query -ht single \\
+	--query \$query --subject \$subject -ht single \\
 	-l 40 -k 39 -m 0 -t 16 -z 32000 --out ${outp}_unique_\$SGE_TASK_ID.fasta
 
-qsub ${out_dir}/split_fasta.sh
+# only submit one split_fasta job
+if [[ \$SGE_TASK_ID -eq 1 ]]
+then
+	qsub ${out_dir}/split_fasta.sh
+fi
 DeduplicationScriptWriting
 chmod u+x ${out_dir}/dedup.sh
 }
@@ -232,7 +243,7 @@ cat > ${out_dir}/split_fasta.sh <<SplitFastaScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m abe
-#$ -j y -o ${outp}_split_fasta.o
+#$ -o ${outp}_split_fasta.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
 
@@ -240,7 +251,7 @@ fastas=(${outp}_unique_*.fasta)
 awk -f /global/homes/p/pcl/Software/poopy/shell/rename_fasta.awk ${outp}_unique_*.fasta \\
 	&> ${outp}_unique.fasta
 
-if [[ find ${out_dir} -maxdepth 1 -type f -name "${prefix}_unique.fasta" -size +10G ]]
+if [[ \$(find ${out_dir} -maxdepth 1 -type f -name "${prefix}_unique.fasta" -size +10G) ]]
 then
 	python2.7 /global/homes/p/pcl/Software/poopy/src/splitReads.py -i ${outp}_unique.fasta \\
 	-o ${outp}_unique -c 10000000000 -bp
@@ -249,7 +260,8 @@ else
 fi
 
 fastas=(${outp}_unique[1-9]*.fasta)
-qsub -t 1-\${#fastas[@]} ${out_dir}/align.sh
+num_fastas=\${#fastas[@]}
+qsub -t 1-\$num_fastas ${out_dir}/align.sh
 SplitFastaScriptWriting
 chmod u+x ${out_dir}/split_fasta.sh
 }
@@ -265,19 +277,69 @@ cat > ${out_dir}/align.sh <<AlignScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m abe
-#$ -j y -o ${outp}_align.o
+#$ -o ${outp}_align.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
 
 fastas=(${outp}_unique[1-9]*.fasta)
 index=\$(( \$SGE_TASK_ID-1 ))
+query=\${fastas[\$index]}
 
 /global/homes/p/pcl/Software/align_test/Release/align_test -i ConstructOverlapGraph -ht single \\
-	--TransitiveReduction --query \${fastas[\$index]} --subject ${outp}_unique.fasta \\
-	--out ${outp}\$SGE_TASK_ID.align \\
+	--TransitiveReduction --subject \$query --query ${outp}_unique.fasta \\
+	--out ${outp}_\$SGE_TASK_ID.align \\
 	-l 40 -k 39 -m 0 -t 64 -z 64000
+
+if [[ \$SGE_TASK_ID -eq 1 ]]
+then
+	qsub ${out_dir}/omega.sh
+fi
 AlignScriptWriting
 chmod u+x ${out_dir}/align.sh
+}
+
+#==================================
+# run omega2
+#==================================
+do_omega(){
+cat > ${out_dir}/omega.sh <<OmegaScriptWriting
+#!/bin/bash
+
+#$ -N omega_${prefix}
+#$ -cwd
+#$ -M jjchai01@gmail.com
+#$ -m abe
+#$ -o ${outp}_omega.o
+#$ -l h_rt=12:00:00
+#$ -l exclusive.c
+
+module swap PrgEnv-gnu/4.6 PrgEnv-gnu/4.8
+OMEGA2=/global/homes/p/pcl/Software/omega2_v1.4/omega2
+
+dataset=$prefix
+reads=${out_dir}/B7_PAPT_1_unique.fasta
+align_out=(${outp}_*align)
+align_out=\$(echo \${align_out} | tr " " ",")
+
+ovl=50
+omega_dir=$out_dir/\${dataset}_OVL\${ovl}
+if [ ! -d \$omega_dir ]
+then
+	mkdir -p \$omega_dir
+fi
+
+omega_out_base=\${omega_dir}/\${dataset}
+contig=\${omega_out_base}_contigs.fasta
+
+if [ ! -e \$contig ]
+then
+	\${OMEGA2} -f \${reads} -e \${align_out} -mld 1000 -mcf 10 -mlr 1000 -ovl \${ovl} -o \${omega_out_base} -log DEBUG &> \${omega_dir}/assembly.out
+else
+	echo assembled contigs already exist, maybe another name?
+fi
+
+OmegaScriptWriting
+chmod u+x ${out_dir}/omega.sh
 }
 
 do_trim
@@ -286,4 +348,5 @@ do_split
 do_dedup
 do_split_fasta
 do_align
+do_omega
 exit #?
