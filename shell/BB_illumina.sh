@@ -99,7 +99,7 @@ cat > ${out_dir}/trim_merge.sh <<TrimmingScriptWriting
 #$ -N trim_merge_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -l h_rt=12:00:00
 #$ -l ram.c=120G
 #$ -l exclusive.c
@@ -113,7 +113,7 @@ ${BBmap}/bbduk.sh in=${outp}_trim.fq.gz out=${outp}_filter.fq.gz ref=$phiX_adapt
 
 echo Merge Before Error Correction \$(date)
 ${BBmap}/bbmerge.sh in=${outp}_filter.fq.gz out=${outp}_noEC_merged.fq.gz outu=${outp}_noEC_unmerged.fq.gz \\
-	extend2=20 iterations=10 &> ${outp}_noEC_bbmerge.o
+	-Xmx110G extend2=20 iterations=10 &> ${outp}_noEC_bbmerge.o
 
 qsub ${out_dir}/ec.sh
 
@@ -131,7 +131,7 @@ cat > ${out_dir}/ec.sh <<ErrorCorrectionScriptWriting
 #$ -N ec_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -l h_rt=12:00:00
 #$ -l ram.c=120G
 #$ -l exclusive.c
@@ -139,13 +139,13 @@ cat > ${out_dir}/ec.sh <<ErrorCorrectionScriptWriting
 
 ${BBmap}/tadpole.sh in=${outp}_noEC_merged.fq.gz,${outp}_noEC_unmerged.fq.gz \\
 	oute=${outp}_merged_EC.fq.gz,${outp}_unmerged_EC.fq.gz \\
-	mode=correct markbadbases=2 ecc=t shave rinse threads=16 -Xmx115g &> ${outp}_merge_ec.o
+	mode=correct markbadbases=2 ecc=t shave rinse threads=16 -Xmx110G &> ${outp}_merge_ec.o
 
 ${BBmap}/reformat.sh in=${outp}_merged_EC.fq.gz out=${outp}_merged_EC_reformat.fq.gz maxns=0 \\
-	1>> ${outp}_merge_ec.o 2>&1
+	-Xmx110G 1>> ${outp}_merge_ec.o 2>&1
 
 ${BBmap}/reformat.sh in=${outp}_unmerged_EC.fq.gz out=${outp}_unmerged_EC_reformat.fq.gz maxns=0 \\
-	1>> ${outp}_merge_ec.o 2>&1
+	-Xmx110G 1>> ${outp}_merge_ec.o 2>&1
 
 qsub ${out_dir}/split.sh
 ErrorCorrectionScriptWriting
@@ -162,7 +162,7 @@ cat > ${out_dir}/split.sh <<SplitReadsScriptWriting
 #$ -N split_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -l h_rt=12:00:00
 
 if [[ -e ${outp}_merged_EC_reformat.fq.gz ]]
@@ -209,7 +209,7 @@ cat > ${out_dir}/dedup.sh <<DeduplicationScriptWriting
 #$ -N dedup_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -o ${outp}_dedup.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
@@ -242,7 +242,7 @@ cat > ${out_dir}/split_fasta.sh <<SplitFastaScriptWriting
 #$ -N split_fasta${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -o ${outp}_split_fasta.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
@@ -276,7 +276,7 @@ cat > ${out_dir}/align.sh <<AlignScriptWriting
 #$ -N align_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -o ${outp}_align.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
@@ -308,7 +308,7 @@ cat > ${out_dir}/omega.sh <<OmegaScriptWriting
 #$ -N omega_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
-#$ -m abe
+#$ -m ae
 #$ -o ${outp}_omega.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
@@ -317,7 +317,7 @@ module swap PrgEnv-gnu/4.6 PrgEnv-gnu/4.8
 OMEGA2=/global/homes/p/pcl/Software/omega2_v1.4/omega2
 
 dataset=$prefix
-reads=${out_dir}/B7_PAPT_1_unique.fasta
+reads=${out_dir}/${prefix}_unique.fasta
 align_out=(${outp}_*align)
 align_out=\$(echo \${align_out} | tr " " ",")
 
