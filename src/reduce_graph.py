@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/cjg/bin/python
 
 # -*- coding: utf-8 -*-
 """
@@ -64,7 +64,9 @@ def main(argv=None):
         g = Graph(args.gdlFile)
         g.get_subgraph_read(args.node, args.depth, args.outFile)
     else:
-        sys.stderr.write("There is no node specified.\n")
+        sys.stderr.write("There is no node specified, split graph into components instead.\n")
+        g = Graph(args.gdlFile)
+        g.split_graph(args.outFile)
 
     sys.stderr.write("total time :" + str(time.time() - start_time) +  " seconds")
     sys.stderr.write("\n===========================================================\nDone\n")
