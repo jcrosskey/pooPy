@@ -113,9 +113,11 @@ class Graph:
         read_ids = list(set(read_ids))
         reads = [self.reads.get(x,None) for x in read_ids] # reads corresponding to the read_ids, if read_id does not exist, read = None
         reads = [x for x in reads if x is not None] # Filter out None's in the read list
-        sys.stderr.write("{} read(s) in the graph: ".format(len(reads)))
+        if not quiet:
+            sys.stderr.write("{} read(s) in the graph: ".format(len(reads)))
         reads.sort()
-        sys.stderr.write("{}\n".format(",".join([x.name() for x in reads])))
+        if not quiet:
+            sys.stderr.write("{}\n".format(",".join([x.name() for x in reads])))
         if len(reads) == 0:
             sys.stderr.write('Nodes are not in graph.\n')
             sys.exit()
@@ -170,15 +172,19 @@ class Graph:
         read_ids, edge_ids = self.subgraph_node(read_id, depth)
         self.print_subgraph(read_ids, edge_ids, out)
 
-    def split_graph(self):
+    def split_graph(self, thresh = 10, out=sys.stdout):
         ''' Split graph into connected subgraphs '''
         remaining_read_ids = self.reads.keys()
-        subgraphs = []
+        num_subgraphs = 0
+        num_subgraph_thresh = 0
         while len(remaining_read_ids) > 0:
-            #sys.stderr.write('Remaining nodes in graph: %d\n' % len(remaining_read_ids))
+            sys.stderr.write('Remaining nodes in graph: %d\n' % len(remaining_read_ids))
             remaining_read_ids.sort()
             read_ids, edge_ids = self.subgraph_node(remaining_read_ids[0],len(remaining_read_ids),True)
-            subgraphs.append((read_ids, edge_ids))
+            if len(read_ids) >= thresh:
+                self.print_subgraph(read_ids, edge_ids, out)
+                num_subgraph_thresh += 1
             remaining_read_ids = list(set(remaining_read_ids) - set(read_ids))
-        sys.stderr.write("Graph has %d connected subgraphs.\n" % len(subgraphs))
-        return subgraphs
+            num_subgraphs += 1
+        sys.stderr.write("Graph has %d connected subgraphs.\n" % num_subgraphs)
+        sys.stderr.write("Graph has %d connected subgraphs containing more than %d nodes.\n" % (thresh, num_subgraph_thresh))
