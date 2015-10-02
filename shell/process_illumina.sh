@@ -64,6 +64,8 @@ if [ ! -e $input ]
 then
 	echo "Input file $input does not exist, quit."
 	exit 1
+else
+	input=$(readlink -f $input)
 fi
 
 # get prefix for all output file names
@@ -170,7 +172,7 @@ cat > ${out_dir}/dup_con.sh <<DeduplicationScriptWriting
 # split input file if it's bigger than 10G bases
 if [[ \$(find $PWD -name ${dedup_input%.*}.fasta -size +10G 2>/dev/null) || \$(find $PWD -name ${dedup_input%.*}.fastq -size +20G 2>/dev/null) ]]; then
 	python \$pyjj/splitReads.py -i ${dedup_input} -o ${prefix} -c 10000000000 -bp
-	/chongle/qiuming/align_test/Release/align_test -i RemoveContainedReads --subject ${prefix}\${PBS_ARRAYID}.${format} --query ${dedup_input} -ht omega -l 40 -t 40 --out ${prefix}\${PBS_ARRAYID}_unique.${format}
+	/chongle/qiuming/align_test/Release/align_test -i RemoveContainedReads --query ${prefix}\${PBS_ARRAYID}.${format} --subject ${dedup_input} -ht omega -l 40 -t 40 --out ${prefix}\${PBS_ARRAYID}_unique.${format}
 else
 	/chongle/qiuming/align_test/Release/align_test -i RemoveContainedReads --subject ${dedup_input} --query ${dedup_input} -ht omega -l 40 -t 40 --out ${prefix}_unique.${format}
 fi
