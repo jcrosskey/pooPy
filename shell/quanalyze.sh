@@ -65,6 +65,7 @@ shift $((OPTIND-1))
 quast_dir=$1/contigs_reports
 mis_contig_fa=$(find $quast_dir -name '*.mis_contigs.fa')
 contigs_report=$(find ${quast_dir} -name 'contigs_report_*.stdout')
+coords=$(find ${quast_dir}/nucmer_output -name '*.coords')
 filtered_coords=$(find ${quast_dir}/nucmer_output -name '*.coords.filtered')
 
 echo '>>>Extract extensively misassembled contigs from' ${mis_contig_fa}
@@ -73,10 +74,14 @@ grep '^>' ${mis_contig_fa} | sed 's/>//g' > ext_mis.id
 echo '>>>Extract locally misassembled contigs from' ${contigs_report}
 grep -A 1 'local misassembly' ${contigs_report} | grep -v 'local misassembly' | grep -v '^--' | awk '{print $(NF)}' > local_mis.id
 
-cat ext_mis.id local_mis.id | sort -u -nk 1 > mis.id
-rm ext_mis.id local_mis.id
+cat ext_mis.id local_mis.id | sort -u -k 1 > mis.id
+#rm ext_mis.id local_mis.id
 
 echo '>>>Find the mapping coordinates for the misassemble contigs'
-awk 'NR==FNR{ids[$0];next} $NF in ids' mis.id $filtered_coords > mis.coords
+awk 'NR==FNR{ids[$0];next} $NF in ids' mis.id $filtered_coords | sort -k 13 > mis.coords
+
+ln -s ${coords} coords
+ln -s ${filtered_coords} filtered_coords
+ln -s ${contigs_report} mappings
 
 exit #?
