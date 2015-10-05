@@ -210,7 +210,6 @@ cat > ${out_dir}/dedup.sh <<DeduplicationScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m ae
-#$ -o ${outp}_dedup.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
 
@@ -221,7 +220,8 @@ index=\$(( \$SGE_TASK_ID-1 ))
 query=\${fastqs[\$index]}
 /global/homes/p/pcl/Software/align_test/Release/align_test -i RemoveContainedReads \\
 	--query \$query --subject \$subject -ht single \\
-	-l 40 -k 39 -m 0 -t 16 -z 32000 --out ${outp}_unique_\$SGE_TASK_ID.fasta
+	-l 40 -k 39 -m 0 -t 16 -z 32000 --out ${outp}_unique_\$SGE_TASK_ID.fasta \\
+	&> ${outp}_\$SGE_TASK_ID.dedup.o
 
 # only submit one split_fasta job
 if [[ \$SGE_TASK_ID -eq 1 ]]
@@ -239,10 +239,11 @@ do_split_fasta(){
 cat > ${out_dir}/split_fasta.sh <<SplitFastaScriptWriting
 #!/bin/bash
 
-#$ -N split_fasta${prefix}
+#$ -N split_fasta_${prefix}
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m ae
+#$ -hold_jid dedup_${prefix}
 #$ -o ${outp}_split_fasta.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
@@ -288,7 +289,8 @@ query=\${fastas[\$index]}
 /global/homes/p/pcl/Software/align_test/Release/align_test -i ConstructOverlapGraph -ht single \\
 	--TransitiveReduction --subject \$query --query ${outp}_unique.fasta \\
 	--out ${outp}_\$SGE_TASK_ID.align \\
-	-l 40 -k 39 -m 0 -t 64 -z 64000
+	-l 40 -k 39 -m 0 -t 64 -z 64000 \\
+	&> ${outp}_\$SGE_TASK_ID.align.o
 
 if [[ \$SGE_TASK_ID -eq 1 ]]
 then
@@ -309,6 +311,7 @@ cat > ${out_dir}/omega.sh <<OmegaScriptWriting
 #$ -cwd
 #$ -M jjchai01@gmail.com
 #$ -m ae
+#$ -hold_jid align_${prefix}
 #$ -o ${outp}_omega.o
 #$ -l h_rt=12:00:00
 #$ -l exclusive.c
