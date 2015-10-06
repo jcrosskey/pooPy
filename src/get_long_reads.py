@@ -35,47 +35,58 @@ def getReadFromFastq(fin):
 ## =================================================================
 ## Find length of all sequences in a fasta file
 ## =================================================================
-def get_long_reads(inputFile,outFile=None,cutoff=1000):
+def get_long_reads_1(fin, fout, fileType,cutoff=1000):
+    readCount = 0
+    if fileType == "fastq":
+        for readLines in getReadFromFastq(fin):
+            seq_len = len(readLines.split("\n")[1])
+            if seq_len >= cutoff:
+                fout.write(readLines)
+                readCount += 1
+    elif fileType == "fasta":
+        for readLines in getReadFromFasta(fin):
+            seq_len = sum(map(len, readLines.split("\n")[1:]))
+            if seq_len >= cutoff:
+                fout.write(readLines)
+                readCount += 1
+    sys.stderr.write("Total number of sequences longer than {} is {}\n".format(cutoff, readCount))
+
+
+def get_long_reads(inputFile,outFile=None,cutoff=1000, fileType=None):
     ''' Extract sequences longer than the specified cutoff from inputFile
         Input:  inputFile - file including all the sequences to investigate
                 outFile - output file with long sequences
                 cutoff - length cutoff
         Output: outFile
     '''
-    fileExt = inputFile.split(".")[-1] # file type, fasta or fastq, autodetect
-    if fileExt in ["fa", "Fa", "fasta", "Fasta"]:  # either fa or fq
-        fileType = "fasta" 
-    elif fileExt in ["fq", "Fq", "fastq", "Fastq"]:  # either fa or fq
-        fileType = "fastq" 
-    else:
-        sys.stderr.write("File type is not correct...\n") 
+    if fileType is None:
+        fileExt = inputFile.split(".")[-1] # file type, fasta or fastq, autodetect
+        if fileExt in ["fa", "Fa", "fasta", "Fasta"]:  # either fa or fq
+            fileType = "fasta" 
+        elif fileExt in ["fq", "Fq", "fastq", "Fastq"]:  # either fa or fq
+            fileType = "fastq" 
+        else:
+            sys.stderr.write("File type is not correct...\n") 
 
-    if not os.path.exists(inputFile):
+    if inputFile is not None and not os.path.exists(inputFile):
         sys.stderr.write("input File {} does not exist!\n".format(inputFile))
         return -1
-    if outFile is None:
-        outFile = os.getcwd()  + '/long_sequences.fasta'
-    outDir = os.path.dirname(os.path.abspath(outFile))
-    if not os.path.exists(outDir):
-        os.makedirs(outDir)
+    if outFile is not None:
+        outDir = os.path.dirname(os.path.abspath(outFile))
+        if not os.path.exists(outDir):
+            os.makedirs(outDir)
         
-    fout = open(outFile, 'w')
-    readCount = 0
-    with open(inputFile,'r') as fin:
-        if fileType == "fastq":
-            for readLines in getReadFromFastq(fin):
-                seq_len = len(readLines.split("\n")[1])
-                if seq_len >= cutoff:
-                    fout.write(readLines)
-                    readCount += 1
-        elif fileType == "fasta":
-            for readLines in getReadFromFasta(fin):
-                seq_len = sum(map(len, readLines.split("\n")[1:]))
-                if seq_len >= cutoff:
-                    fout.write(readLines)
-                    readCount += 1
-    fout.close()
-    sys.stderr.write("Total number of sequences longer than {} is {}\n".format(cutoff, readCount))
+    fin = sys.stdin
+    fout = sys.stdout
+    if inputFile is not None:
+        fin = open(inputFile, 'r')
+    if outFile is not None:
+        fout = open(outFile, 'w')
+    get_long_reads_1(fin, fout, fileType,cutoff)
+    if inputFile is not None:
+        fin.close()
+    if outFile is not None:
+        fout.close()
                     
 ## =================================================================
 ## argument parser
@@ -90,11 +101,13 @@ parser = argparse.ArgumentParser(description="Extract sequences longer than the 
                                  )
 
 ## input files and directories
-parser.add_argument("-i","--in",help="input file",dest='inputFile',required=True)
+parser.add_argument("-i","--in",help="input file, if not specified, use standard input",dest='inputFile')
 parser.add_argument("-c","--cutoff",help="length cutoff",dest='cutoff',default=1000, type=int)
 
+## options
+parser.add_argument("-t", "--type", help="type of input file, fasta or fastq", dest="fileType")
 ## output directory
-parser.add_argument("-o","--out",help="output file",dest='outFile',default=None)
+parser.add_argument("-o","--out",help="output file, default is standard output",dest='outFile',default=None)
 
 ## =================================================================
 ## main function
@@ -103,7 +116,10 @@ def main(argv=None):
     if argv is None:
         args = parser.parse_args()
 
-    get_long_reads(args.inputFile, args.outFile, args.cutoff)
+    if args.inputFile is None and args.fileType is None:
+        sys.stderr.write("Reading from standard input, file type need to be specified.\n")
+    else:
+        get_long_reads(args.inputFile, args.outFile, args.cutoff, args.fileType)
 ##==============================================================
 ## call from command line (instead of interactively)
 ##==============================================================
