@@ -7,7 +7,7 @@ import re
 ## =================================================================
 ## Find length of all sequences in a fasta file
 ## =================================================================
-def count_bps(fastaFile,countFile,trim_string=None):
+def count_bps(fastaFile,mycount,trim_string=None):
     ''' Find length of all sequences in a fasta file
 
         Input:  fastaFile - file that includes filtered subreads
@@ -18,7 +18,6 @@ def count_bps(fastaFile,countFile,trim_string=None):
         return -1
         
     fasta = open(fastaFile,'r') 
-    mycount = open(countFile,'w')
     seqID = ''
     seqLen = 0
     with open(fastaFile,'r') as fasta:
@@ -34,7 +33,6 @@ def count_bps(fastaFile,countFile,trim_string=None):
                 seqLen += len(line.strip('\n'))
     # write the length of the last sequence
     mycount.write("{}\t{}".format(seqID, seqLen))
-    mycount.close()
                     
 ## =================================================================
 ## argument parser
@@ -53,7 +51,7 @@ parser.add_argument("-i","--in",help="input fasta file",dest='fastaFile',require
 parser.add_argument("-t","--trim",help="string/character where the read name is trimmed",dest='trim_string',default=None)
 
 ## output directory
-parser.add_argument("-o","--out",help="output directory",dest='countFile',required=True)
+parser.add_argument("-o","--out",help="output length file",dest='countFile',type=argparse.FileType('w'), default = sys.stdout)
 
 ## =================================================================
 ## main function
