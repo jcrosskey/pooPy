@@ -4,6 +4,18 @@ import argparse
 import sys
 import os
 import re 
+
+def getReadFromFasta(fin):
+    output = ""
+    for line in fin:
+        if line.strip("\n").strip() != "":
+            if line[0] != ">":
+                output += line
+            else:
+                if output != "":
+                    yield output
+                output = line
+    yield output
 ## =================================================================
 ## Given a fasta file, find the sequence for the specific region of 
 ## a sequence with given ID. 
@@ -63,6 +75,27 @@ def get_contig(fastaFile, seqID, start, end, limit):
         return -1
     fasta.close()
                     
+def get_IDs(id_file):
+    seqIDs = []
+    with open(id_file, 'r') as ids:
+        for line in ids:
+            seqIDs.append(line.strip("\n").split()[0])
+    seqIDs = map(int,list(set(seqIDs)))
+    seqIDs.sort()
+    seqIDs = map(str, seqIDs)
+    sys.stderr.write("Number of IDs to extract: {}\n".format(len(seqIDs)) )
+    return seqIDs
+
+def get_contigs(fastaFile, seqIDs):
+    index = 0
+    with open(fastaFile, 'r') as fin:
+        for readLines in getReadFromFasta(fin):
+            seq_id = readLines.split()[0][1:] # sequence name
+            if seq_id == seqIDs[index]:
+                sys.stdout.write(readLines)
+                index += 1
+                if index == len(seqIDs):
+                    break
 ## =================================================================
 ## argument parser
 ## =================================================================
@@ -77,7 +110,8 @@ parser = argparse.ArgumentParser(description="fetch sequence from fasta file giv
 
 ## input files and directories
 parser.add_argument("-i","--in",help="input fasta file",dest='fastaFile',required=True)
-parser.add_argument("-n","--name",help="ID of the sequence to find",dest='seqID',required=True)
+parser.add_argument("-f","--id_file",help="file with reads/contigs ids to extract",dest='id_file')
+parser.add_argument("-n","--name",help="ID of the sequence to find",dest='seqID')
 parser.add_argument("-s","--start",help="1-based starting position of the sequence",dest='start',default=1, type=int)
 parser.add_argument("-e","--end",help="1-based ending position of the sequence",dest='end',default=-1, type=int)
 parser.add_argument("-l","--limit",help="maximum number of sequences to return",dest='limit',default=-1, type=int)
@@ -92,8 +126,14 @@ def main(argv=None):
     
     if argv is None:
         args = parser.parse_args()
-
-    get_contig(args.fastaFile,args.seqID,args.start,args.end, args.limit)
+    if args.seqID is None and args.id_file is None:
+        sys.exit("At least a sequence ID or a file of IDs is needed.\n")
+    if args.seqID is not None:
+        get_contig(args.fastaFile,args.seqID,args.start,args.end, args.limit)
+    elif args.id_file is not None:
+        seqIDs = get_IDs(args.id_file)
+        get_contigs(args.fastaFile, seqIDs)
+        
 
 ##==============================================================
 ## call from command line (instead of interactively)
