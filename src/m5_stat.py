@@ -32,6 +32,7 @@ parser.add_argument("-m", "--minSeg", help="minimum length of the mapped query s
 
 ## output directory
 parser.add_argument("-o","--out",help="output file",dest='output', default=sys.stdout, type=argparse.FileType('w'))
+parser.add_argument("-mo","--mapout",help="mapped length output file",dest='mapout', required=True, type=argparse.FileType('w'))
 
 ## =================================================================
 ## parsing function
@@ -50,21 +51,24 @@ class BlasrM5:
         self.ref = record_fields[5]
         # ref_name: ref_length
         if self.ref not in self.ref_dict:
-            self.ref_dict[self.ref] = int(record_fields[6])
+            self.ref_dict[self.ref] = [0] * int(record_fields[6])
         self.rstart = int(record_fields[7])
         self.rend = int(record_fields[8])
+        for i in xrange(self.rstart, self.rend):
+            self.ref_dict[self.ref][i] = 1
         self.rstrand = record_fields[9] # tstrand
         self.nummatch = int(record_fields[11])
         self.nummismatch = int(record_fields[12])
         self.numins = int(record_fields[13])
         self.numdel = int(record_fields[14])
+        self.indel = self.numins + self.numdel
     def __lt__(self, r_m5):
         return self.qstart < r_m5.qstart
     def __eq__(self, r_m5):
         return (self.qstart == r_m5.qstart) and (self.mapLen == r_m5.mapLen)
     def __str__(self):
         s = "{} mapped to {} on {} strand with mapped segment length {}\n".format(self.qname, self.ref, self.rstrand, self.mapLen)
-        s += "{} {} | {} {} | {} | {} \n".format(self.qstart, self.qend, self.rstart, self.rend, self.qlen, self.ref_dict[self.ref])
+        s += "{} {} | {} {} | {} | {} \n".format(self.qstart, self.qend, self.rstart, self.rend, self.qlen, len(self.ref_dict[self.ref]))
         return s
     def contains(self, r_m5):
         return (self.rstart < r_m5.rstart and self.rend > r_m5.rend)
@@ -72,7 +76,7 @@ class BlasrM5:
         """ check and see if two mappings are separated because of circularity of the genome """
         if self.ref != m5.ref: # not mapped to the same references
             return False
-        elif self.rstart < 15 and (self.ref_dict[self.ref] - m5.rend) < 15:
+        elif self.rstart < 15 and (len(self.ref_dict[self.ref]) - m5.rend) < 15:
             return True
         else:
             return False
@@ -138,14 +142,24 @@ class ReadMap:
         return "".join(r.__str__() for r in self.records)
 
 
-def m5_stat(m5_fin, minSeg, out):
+def m5_stat(m5_fin, minSeg, maplen_out, out):
     m5_fin.readline()
     read = ReadMap()
+    max_mapLen = 0
+    mismatch = 0
+    indel = 0
+    tot_mapLen = 0
     for line in m5_fin:
         m5 = BlasrM5(line)
+        maplen_out.write("{}\n".format(m5.mapLen))
+        mismatch += m5.nummismatch
+        indel += m5.indel
+        tot_mapLen += m5.mapLen
+        if m5.mapLen > max_mapLen:
+            max_mapLen = m5.mapLen
         if m5.qname != read.name:
             if read.name != "" and read.length >= minSeg:
-                out.write("{}\t{}\t{}\n".format(read.name, read.map_type(), read.length))
+                out.write("{}\t{}\t{}\t{}\n".format(read.name, read.map_type(), read.length, read.tot_mapLen()))
                 #out.write(read.__str__())
             read = ReadMap(m5)
         else:
@@ -153,6 +167,12 @@ def m5_stat(m5_fin, minSeg, out):
     if read.name != "" and read.length >= minSeg:
         out.write("{}\t{}\t{}\n".format(read.name, read.map_type(), read.length))
         #out.write(read.__str__())
+    covered_bps = sum([sum(m5.ref_dict[r]) for r in m5.ref_dict])
+    sys.stdout.write("Largest alignment: {}\n".format(max_mapLen))
+    sys.stdout.write("Total mismatches: {}\n".format(mismatch))
+    sys.stdout.write("Total indels: {}\n".format(indel))
+    sys.stdout.write("Total mapped length: {}\n".format(tot_mapLen))
+    sys.stdout.write("Total covered bases: {}\n".format(covered_bps))
 
 
 
@@ -163,7 +183,7 @@ def main(argv=None):
     
     if argv is None:
         args = parser.parse_args()
-    m5_stat(args.m5File, args.minSeg, args.output)
+    m5_stat(args.m5File, args.minSeg, args.mapout, args.output)
 
 ##==============================================================
 ## call from command line (instead of interactively)
